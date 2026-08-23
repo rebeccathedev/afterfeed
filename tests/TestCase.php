@@ -16,6 +16,7 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->withoutVite();
         $this->user = User::factory()->create();
         $this->actingAs($this->user);
         $this->apiToken = 'af_'.Str::random(64);
