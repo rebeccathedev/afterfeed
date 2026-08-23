@@ -1,0 +1,7 @@
+@props(['post'])
+<article class="embedded-post">
+<header><x-service-icon :platform="$post->socialAccount->platform"/><div><strong>{{ $post->socialAccount->display_name ?: $post->socialAccount->handle }}</strong><span>{{ $post->socialAccount->handle }} · {{ $post->posted_at?->format('M j, Y g:i A') }}</span></div>@if($post->originalUrl())<a href="{{ $post->originalUrl() }}" target="_blank" rel="noreferrer" aria-label="Open original boosted post">↗</a>@endif</header>
+<x-post-body :post="$post"/>
+@if($post->contextLabels())<div class="post-context-labels">@foreach($post->contextLabels() as $label)@if(str_starts_with($label,'#'))<a href="{{ route('archives.index',['q'=>$label]) }}#timeline">{{ $label }}</a>@else<span>{{ $label }}</span>@endif @endforeach</div>@endif
+@if($post->attachments->isNotEmpty())<div @class(['embedded-media','multi'=>$post->attachments->count()>1])>@foreach($post->attachments->take(4) as $media)@if($media->type==='video')<video controls preload="metadata" data-lightbox data-media-type="video" data-media-src="{{ asset('storage/'.$media->path) }}"><source src="{{ asset('storage/'.$media->path) }}"></video>@else<img src="{{ asset('storage/'.$media->path) }}" alt="{{ $media->alt_text ?: 'Archived image from boosted post' }}" loading="lazy" data-lightbox data-media-type="image" data-media-src="{{ asset('storage/'.$media->path) }}">@endif @endforeach</div>@endif
+</article>

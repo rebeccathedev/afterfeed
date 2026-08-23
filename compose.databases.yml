@@ -1,0 +1,37 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: afterfeed
+      MYSQL_USER: afterfeed
+      MYSQL_PASSWORD: afterfeed
+      MYSQL_ROOT_PASSWORD: afterfeed-root
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pafterfeed-root"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - afterfeed-mysql:/var/lib/mysql
+
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: afterfeed
+      POSTGRES_USER: afterfeed
+      POSTGRES_PASSWORD: afterfeed
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U afterfeed -d afterfeed"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - afterfeed-postgres:/var/lib/postgresql/data
+
+volumes:
+  afterfeed-mysql:
+  afterfeed-postgres:
