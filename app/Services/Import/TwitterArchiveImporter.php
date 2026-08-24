@@ -34,6 +34,7 @@ class TwitterArchiveImporter
         }
 
         try {
+            $this->useUtcDatabaseSession();
             $accountData = $this->readWrappedJson($zip, 'data/account.js')[0]['account'] ?? null;
             if (! $accountData) {
                 throw new InvalidArgumentException('This does not look like a supported Twitter archive.');
@@ -51,7 +52,7 @@ class TwitterArchiveImporter
                     ['fingerprint' => $fingerprint],
                     [
                         'social_account_id' => $account->id, 'label' => basename($path),
-                        'exported_at' => data_get($manifest, 'archiveInfo.generationDate'), 'imported_at' => now(),
+                        'exported_at' => $this->utcDate(data_get($manifest, 'archiveInfo.generationDate')), 'imported_at' => now()->utc(),
                         'status' => 'ready',
                         'metadata' => ['source_path' => realpath($path), 'partial' => (bool) data_get($manifest, 'archiveInfo.isPartialArchive', false)],
                     ]
@@ -93,7 +94,7 @@ class TwitterArchiveImporter
 
     private function persistTweetBatch(ZipArchive $zip, SocialAccount $account, Archive $archive, array $mediaFiles, array $tweets, bool $deleted): void
     {
-        $now = now();
+        $now = now()->utc();
         $rows = [];
         foreach ($tweets as $tweet) {
             $attributes = $this->postAttributes($account, $tweet);
@@ -103,8 +104,8 @@ class TwitterArchiveImporter
                 'type' => $attributes['type'],
                 'body' => $attributes['body'],
                 'url' => $attributes['url'],
-                'posted_at' => $attributes['posted_at']->toDateTimeString(),
-                'deleted_at' => $deleted ? CarbonImmutable::createFromFormat('D M d H:i:s O Y', $tweet['deleted_at'])->toDateTimeString() : null,
+                'posted_at' => $attributes['posted_at']->utc()->toDateTimeString(),
+                'deleted_at' => $deleted ? CarbonImmutable::createFromFormat('D M d H:i:s O Y', $tweet['deleted_at'])->utc()->toDateTimeString() : null,
                 'reply_to_external_id' => $attributes['reply_to_external_id'],
                 'metadata' => json_encode($attributes['metadata']),
                 'created_at' => $now,
@@ -139,6 +140,18 @@ class TwitterArchiveImporter
                 'place' => $tweet['place'] ?? null,
             ],
         ];
+    }
+
+    private function useUtcDatabaseSession(): void
+    {
+        if (in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
+            DB::statement("SET time_zone = '+00:00'");
+        }
+    }
+
+    private function utcDate(?string $value): ?string
+    {
+        return $value ? CarbonImmutable::parse($value)->utc()->toDateTimeString() : null;
     }
 
     private function mediaFiles(ZipArchive $zip): array

@@ -11,6 +11,7 @@ use App\Models\PostAnnotation;
 use App\Models\PostCollection;
 use App\Models\SocialAccount;
 use App\Services\DatabaseDialect;
+use App\Services\Import\TwitterArchiveImporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -238,6 +239,37 @@ class ExampleTest extends TestCase
         File::delete([$tarPath, $tarPath.'.gz', storage_path('app/private/imports/targzjournal-'.$uploadId.'.zip')]);
         File::delete(storage_path('app/private/imports/incoming/'.$uploadId.'.json'));
         File::delete(storage_path('app/private/imports/incoming/'.$uploadId.'.lock'));
+    }
+
+    public function test_twitter_imports_store_spring_forward_timestamps_in_utc(): void
+    {
+        $source = tempnam(sys_get_temp_dir(), 'afterfeed-twitter-dst-');
+        $zip = new ZipArchive;
+        $zip->open($source, ZipArchive::OVERWRITE);
+        $zip->addFromString('data/account.js', 'window.YTD.account.part0 = '.json_encode([['account' => [
+            'accountId' => 'dst-account', 'username' => 'dst-account', 'accountDisplayName' => 'DST Account',
+        ]]], JSON_THROW_ON_ERROR));
+        $zip->addFromString('data/manifest.js', 'window.__THAR_CONFIG = '.json_encode([
+            'archiveInfo' => ['generationDate' => '2024-01-01T00:00:00Z', 'isPartialArchive' => false],
+        ], JSON_THROW_ON_ERROR).';');
+        $zip->addFromString('data/tweets.js', 'window.YTD.tweets.part0 = '.json_encode([['tweet' => [
+            'id_str' => 'dst-tweet', 'created_at' => 'Sun Mar 08 02:26:58 +0000 2009',
+            'full_text' => 'A timestamp inside the Mountain Time spring-forward gap.',
+        ]]], JSON_THROW_ON_ERROR));
+        $zip->close();
+
+        $originalTimezone = date_default_timezone_get();
+        config(['app.timezone' => 'America/Denver']);
+        date_default_timezone_set('America/Denver');
+
+        try {
+            app(TwitterArchiveImporter::class)->import($source);
+            $this->assertDatabaseHas('posts', ['external_id' => 'dst-tweet', 'posted_at' => '2009-03-08 02:26:58']);
+        } finally {
+            date_default_timezone_set($originalTimezone);
+            config(['app.timezone' => $originalTimezone]);
+            File::delete($source);
+        }
     }
 
     public function test_the_media_gallery_shows_and_filters_archived_media(): void
