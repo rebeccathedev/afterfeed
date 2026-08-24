@@ -56,7 +56,7 @@ class FacebookArchiveImporter
         $fingerprint = hash_file('sha256', $path);
         $archive = Archive::firstOrCreate(['fingerprint' => $fingerprint], [
             'social_account_id' => $account->id, 'label' => basename($path), 'exported_at' => $this->exportDate($path),
-            'imported_at' => now(), 'status' => 'ready', 'metadata' => ['source_path' => realpath($path), 'format' => 'facebook-json'],
+            'imported_at' => now()->utc(), 'status' => 'ready', 'metadata' => ['source_path' => realpath($path), 'format' => 'facebook-json'],
         ]);
         $created = $archive->wasRecentlyCreated;
         $this->profile($zip, $account, $archive, $profile);
@@ -134,7 +134,7 @@ class FacebookArchiveImporter
         return [
             'social_account_id' => $account->id, 'external_id' => $externalId,
             'type' => $type, 'body' => $body ?: ($record['title'] ?? null), 'url' => $externalUrl,
-            'posted_at' => isset($record['timestamp']) ? date('Y-m-d H:i:s', $record['timestamp']) : null,
+            'posted_at' => isset($record['timestamp']) ? gmdate('Y-m-d H:i:s', $record['timestamp']) : null,
             'metadata' => json_encode([
                 'title' => $record['title'] ?? null,
                 'external_url' => $externalUrl,
@@ -142,7 +142,7 @@ class FacebookArchiveImporter
                 'external_source' => $linkedContext['source'] ?? null,
                 'location' => $location,
             ]),
-            'created_at' => now(), 'updated_at' => now(),
+            'created_at' => now()->utc(), 'updated_at' => now()->utc(),
         ];
     }
 
@@ -212,7 +212,7 @@ class FacebookArchiveImporter
                 $rows[] = [
                     'social_account_id' => $account->id, 'external_id' => $id, 'url' => $url, 'body' => $reaction,
                     'metadata' => json_encode(['reaction' => $reaction, 'timestamp' => $item['timestamp'] ?? null]),
-                    'created_at' => now(), 'updated_at' => now(),
+                    'created_at' => now()->utc(), 'updated_at' => now()->utc(),
                 ];
                 if (count($rows) === 500) {
                     $this->upsertReactions($rows);
@@ -265,7 +265,7 @@ class FacebookArchiveImporter
         foreach ($profile['previous_names'] ?? [] as $previous) {
             AccountAlias::updateOrCreate(
                 ['social_account_id' => $account->id, 'handle' => $previous['name']],
-                ['changed_at' => isset($previous['timestamp']) ? date('c', $previous['timestamp']) : null]
+                ['changed_at' => isset($previous['timestamp']) ? gmdate('c', $previous['timestamp']) : null]
             );
         }
         ProfileSnapshot::updateOrCreate(['archive_id' => $archive->id], [

@@ -11,6 +11,7 @@ use App\Models\PostAnnotation;
 use App\Models\PostCollection;
 use App\Models\SocialAccount;
 use App\Services\DatabaseDialect;
+use App\Services\Import\FacebookArchiveImporter;
 use App\Services\Import\TwitterArchiveImporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
@@ -265,6 +266,34 @@ class ExampleTest extends TestCase
         try {
             app(TwitterArchiveImporter::class)->import($source);
             $this->assertDatabaseHas('posts', ['external_id' => 'dst-tweet', 'posted_at' => '2009-03-08 02:26:58']);
+        } finally {
+            date_default_timezone_set($originalTimezone);
+            config(['app.timezone' => $originalTimezone]);
+            File::delete($source);
+        }
+    }
+
+    public function test_facebook_imports_store_spring_forward_timestamps_in_utc(): void
+    {
+        $source = tempnam(sys_get_temp_dir(), 'afterfeed-facebook-dst-');
+        $zip = new ZipArchive;
+        $zip->open($source, ZipArchive::OVERWRITE);
+        $zip->addFromString('personal_information/profile_information/profile_information.json', json_encode([
+            'profile_v2' => ['name' => ['full_name' => 'DST Account']],
+        ], JSON_THROW_ON_ERROR));
+        $zip->addFromString('your_facebook_activity/posts/your_posts__check_ins__photos_and_videos_1.json', json_encode([[
+            'timestamp' => 1331433051,
+            'data' => [['post' => 'A timestamp inside the Mountain Time spring-forward gap.']],
+        ]], JSON_THROW_ON_ERROR));
+        $zip->close();
+
+        $originalTimezone = date_default_timezone_get();
+        config(['app.timezone' => 'America/Denver']);
+        date_default_timezone_set('America/Denver');
+
+        try {
+            app(FacebookArchiveImporter::class)->import($source);
+            $this->assertDatabaseHas('posts', ['posted_at' => '2012-03-11 02:30:51']);
         } finally {
             date_default_timezone_set($originalTimezone);
             config(['app.timezone' => $originalTimezone]);

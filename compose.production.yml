@@ -12,6 +12,7 @@ services:
       DB_DATABASE: ${DB_DATABASE:-/var/www/html/database/database.sqlite}
       DB_USERNAME: ${DB_USERNAME:-afterfeed}
       DB_PASSWORD: ${DB_PASSWORD:-}
+      DB_TIMEZONE: ${DB_TIMEZONE:-+00:00}
       DB_SSLMODE: ${DB_SSLMODE:-prefer}
     volumes:
       - afterfeed-database:/var/www/html/database

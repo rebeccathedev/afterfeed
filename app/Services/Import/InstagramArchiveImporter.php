@@ -53,7 +53,7 @@ class InstagramArchiveImporter
         ]);
         $archive = Archive::firstOrCreate(['fingerprint' => hash_file('sha256', $path)], [
             'social_account_id' => $account->id, 'label' => basename($path), 'exported_at' => $this->exportDate($path),
-            'imported_at' => now(), 'status' => 'ready', 'metadata' => ['source_path' => realpath($path), 'format' => 'instagram-json'],
+            'imported_at' => now()->utc(), 'status' => 'ready', 'metadata' => ['source_path' => realpath($path), 'format' => 'instagram-json'],
         ]);
         $created = $archive->wasRecentlyCreated;
         $this->profile($zip, $account, $archive, $profile);
@@ -76,8 +76,8 @@ class InstagramArchiveImporter
                 $id = $this->mediaId($record, $type);
                 $rows[] = [
                     'social_account_id' => $account->id, 'external_id' => $id, 'type' => $type, 'body' => $this->text($record['title'] ?? ''),
-                    'url' => null, 'posted_at' => date('Y-m-d H:i:s', $record['creation_timestamp'] ?? data_get($record, 'media.0.creation_timestamp', 0)),
-                    'metadata' => json_encode(['cross_post_source' => data_get($record, 'media.0.cross_post_source.source_app')]), 'created_at' => now(), 'updated_at' => now(),
+                    'url' => null, 'posted_at' => gmdate('Y-m-d H:i:s', $record['creation_timestamp'] ?? data_get($record, 'media.0.creation_timestamp', 0)),
+                    'metadata' => json_encode(['cross_post_source' => data_get($record, 'media.0.cross_post_source.source_app')]), 'created_at' => now()->utc(), 'updated_at' => now()->utc(),
                 ];
             }
             DB::table('posts')->upsert($rows, ['social_account_id', 'external_id'], ['type', 'body', 'posted_at', 'metadata', 'updated_at']);
@@ -105,7 +105,7 @@ class InstagramArchiveImporter
             $externalId = sha1(json_encode([$time, $rawBody, data_get($map, 'Media Owner.value')]));
             $externalIds[] = $externalId;
             $post = Post::updateOrCreate(['social_account_id' => $account->id, 'external_id' => $externalId], [
-                'type' => 'comment', 'body' => $body, 'posted_at' => date('Y-m-d H:i:s', $time), 'metadata' => ['media_owner' => data_get($map, 'Media Owner.value')],
+                'type' => 'comment', 'body' => $body, 'posted_at' => gmdate('Y-m-d H:i:s', $time), 'metadata' => ['media_owner' => data_get($map, 'Media Owner.value')],
             ]);
             $archive->posts()->syncWithoutDetaching($post->id);
         }
@@ -200,7 +200,7 @@ class InstagramArchiveImporter
                 $id = sha1(json_encode([$thread['thread_path'] ?? $file, $message['timestamp_ms'] ?? 0, $sender, $i]));
                 DirectMessage::updateOrCreate(['social_account_id' => $account->id, 'external_id' => $id], [
                     'thread_id' => $thread['thread_path'] ?? $file, 'direction' => $sender === $account->display_name ? 'sent' : 'received', 'sender' => $sender,
-                    'recipient' => null, 'subject' => $this->text($thread['title'] ?? ''), 'body' => $content, 'sent_at' => $timestamp ? date('Y-m-d H:i:s', $timestamp) : null,
+                    'recipient' => null, 'subject' => $this->text($thread['title'] ?? ''), 'body' => $content, 'sent_at' => $timestamp ? gmdate('Y-m-d H:i:s', $timestamp) : null,
                     'metadata' => array_diff_key($message, array_flip(['sender_name', 'timestamp_ms', 'content'])),
                 ]);
             }
