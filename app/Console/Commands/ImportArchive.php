@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use App\Services\Import\FacebookArchiveImporter;
+use App\Services\Import\GooglePlusArchiveImporter;
 use App\Services\Import\InstagramArchiveImporter;
 use App\Services\Import\LiveJournalArchiveImporter;
 use App\Services\Import\MastodonArchiveImporter;
@@ -20,7 +21,7 @@ class ImportArchive extends Command
 
     protected $description = 'Import a social media archive';
 
-    public function handle(TwitterArchiveImporter $twitter, MastodonArchiveImporter $mastodon, FacebookArchiveImporter $facebook, RedditArchiveImporter $reddit, InstagramArchiveImporter $instagram, LiveJournalArchiveImporter $liveJournal, PeopleIndexer $people): int
+    public function handle(TwitterArchiveImporter $twitter, MastodonArchiveImporter $mastodon, FacebookArchiveImporter $facebook, GooglePlusArchiveImporter $googlePlus, RedditArchiveImporter $reddit, InstagramArchiveImporter $instagram, LiveJournalArchiveImporter $liveJournal, PeopleIndexer $people): int
     {
         try {
             $owner = $this->option('user');
@@ -37,15 +38,19 @@ class ImportArchive extends Command
             $isFacebook = $zip->locateName('personal_information/profile_information/profile_information.json') !== false;
             $isReddit = $zip->locateName('posts.csv') !== false && $zip->locateName('comments.csv') !== false;
             $isInstagram = $zip->locateName('personal_information/personal_information/personal_information.json') !== false && $zip->locateName('your_instagram_activity/content/posts_1.json') !== false;
+            $isGooglePlus = false;
             $isLiveJournal = false;
-            for ($i = 0; $i < min($zip->numFiles, 100); $i++) {
-                if (preg_match('#^[^/]+/\d{8}_\d{4}$#', $zip->getNameIndex($i))) {
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $name = $zip->getNameIndex($i);
+                if (preg_match('#^Takeout/Google\+ Stream/Posts/.+\.html$#', $name)) {
+                    $isGooglePlus = true;
+                }
+                if ($i < 100 && preg_match('#^[^/]+/\d{8}_\d{4}$#', $name)) {
                     $isLiveJournal = true;
-                    break;
                 }
             }
             $zip->close();
-            $importer = $isLiveJournal ? $liveJournal : ($isInstagram ? $instagram : ($isFacebook ? $facebook : ($isMastodon ? $mastodon : ($isReddit ? $reddit : $twitter))));
+            $importer = $isGooglePlus ? $googlePlus : ($isLiveJournal ? $liveJournal : ($isInstagram ? $instagram : ($isFacebook ? $facebook : ($isMastodon ? $mastodon : ($isReddit ? $reddit : $twitter)))));
             $result = $importer->import($this->argument('path'));
         } catch (Throwable $exception) {
             $this->error($exception->getMessage());

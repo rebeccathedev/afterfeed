@@ -15,6 +15,7 @@ use App\Services\Import\FacebookArchiveImporter;
 use App\Services\Import\TwitterArchiveImporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Phar;
 use PharData;
@@ -297,6 +298,50 @@ class ExampleTest extends TestCase
         } finally {
             date_default_timezone_set($originalTimezone);
             config(['app.timezone' => $originalTimezone]);
+            File::delete($source);
+        }
+    }
+
+    public function test_google_plus_takeout_imports_posts_links_comments_locations_and_media(): void
+    {
+        Storage::fake('public');
+        $source = tempnam(sys_get_temp_dir(), 'afterfeed-google-plus-');
+        $zip = new ZipArchive;
+        $zip->open($source, ZipArchive::OVERWRITE);
+        $zip->addFromString('Takeout/Google+ Stream/Photos/Photos from posts/example.jpg', 'archived-image');
+        $zip->addFromString('Takeout/Google+ Stream/Posts/20171214 - A memory.html', <<<'HTML'
+            <html><body itemid="https://plus.google.com/+ArchivePerson/posts/HtVR4apoMAq" itemscope itemtype="http://schema.org/SocialMediaPosting">
+            <div><div><span itemprop="author" itemscope itemtype="http://schema.org/Person"><img itemprop="image" src="https://example.com/avatar.jpg" alt="Archive Person"><a itemprop="url" href="https://plus.google.com/+ArchivePerson"><span itemprop="name">Archive Person</span></a></span><a><span itemprop="dateCreated">2017-12-14T10:13:06-0500</span></a></div>
+            <div class="main-content"><span itemprop="text">A Google+ memory with a link.</span><a class="media-link" href="../Photos/Photos%20from%20posts/example.jpg"><img itemprop="image" src="../Photos/Photos%20from%20posts/example.jpg" alt="Archived example"></a><a class="location" title="34.7304, -86.5861"><span>Example Place<br>Address: 100 Memory Lane</span></a><a class="link-embed" href="https://example.com/story"><h3>An interesting story</h3></a></div></div>
+            <span itemprop="audience"><div class="visibility">Shared with: Public</div></span><div class="comments"><div class="comment" itemprop="comment" itemscope itemtype="http://schema.org/Comment"><span itemprop="author" itemscope itemtype="http://schema.org/Person"><a itemprop="url" href="https://plus.google.com/+Friend"><span itemprop="name">A Friend</span></a></span><span itemprop="dateCreated">2017-12-14T11:00:00-0500</span><div itemprop="text">A preserved comment.</div></div></div>
+            </body></html>
+            HTML);
+        $zip->addFromString('Takeout/Google+ Stream/ActivityLog/Comments.html', <<<'HTML'
+            <html><body><div class="log"><div class="item"><div class="text"><a class="item-title" href="https://plus.google.com/+Friend/posts/remote">Commented on post by A Friend</a>A comment made elsewhere.<div class="footer"><span class="time" title="2017-12-15T12:00+0000">December 15</span></div></div></div></div></body></html>
+            HTML);
+        $zip->addFromString('Takeout/Google+ Stream/ActivityLog/+1s on posts.html', <<<'HTML'
+            <html><body><div class="log"><div class="item"><div class="text"><a class="item-title" href="https://plus.google.com/+Friend/posts/liked">+1'd post by A Friend</a>A liked post.<div class="footer"><span class="time" title="2017-12-16T12:00+0000">December 16</span></div></div></div></div></body></html>
+            HTML);
+        $zip->close();
+
+        try {
+            $this->artisan('archive:import', ['path' => $source, '--user' => $this->user->id])->assertSuccessful();
+            $this->assertDatabaseHas('social_accounts', ['platform' => 'google_plus', 'external_id' => '+ArchivePerson', 'display_name' => 'Archive Person']);
+            $this->assertDatabaseHas('posts', ['external_id' => 'HtVR4apoMAq', 'body' => 'A Google+ memory with a link.', 'posted_at' => '2017-12-14 15:13:06']);
+            $post = Post::where('external_id', 'HtVR4apoMAq')->firstOrFail();
+            $this->assertSame('https://example.com/story', $post->sharedUrl());
+            $this->assertSame('An interesting story', data_get($post->metadata, 'external_name'));
+            $this->assertSame('Public', data_get($post->metadata, 'visibility'));
+            $this->assertSame('A preserved comment.', data_get($post->metadata, 'comments.0.body'));
+            $this->assertSame(34.7304, $post->mapPoint()['latitude']);
+            $this->assertSame('Example Place', $post->mapPoint()['place']);
+            $attachment = $post->attachments()->firstOrFail();
+            $this->assertSame('image', $attachment->type);
+            $this->assertSame('Archived example', $attachment->alt_text);
+            Storage::disk('public')->assertExists($attachment->path);
+            $this->assertDatabaseHas('posts', ['type' => 'comment', 'body' => 'A comment made elsewhere.', 'posted_at' => '2017-12-15 12:00:00']);
+            $this->assertDatabaseHas('liked_posts', ['url' => 'https://plus.google.com/+Friend/posts/liked', 'body' => 'A liked post.']);
+        } finally {
             File::delete($source);
         }
     }

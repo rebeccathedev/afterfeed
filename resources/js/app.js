@@ -353,11 +353,11 @@ if (shareDialog && shareGenerator) {
 }
 
 function platformLabel(platform) {
-    return ({ twitter: 'Twitter / X', x: 'Twitter / X', facebook: 'Facebook', reddit: 'Reddit', instagram: 'Instagram', mastodon: 'Mastodon', livejournal: 'LiveJournal', bluesky: 'Bluesky' })[platform] || platform || 'Social archive';
+    return ({ twitter: 'Twitter / X', x: 'Twitter / X', facebook: 'Facebook', reddit: 'Reddit', instagram: 'Instagram', mastodon: 'Mastodon', livejournal: 'LiveJournal', bluesky: 'Bluesky', google_plus: 'Google+' })[platform] || platform || 'Social archive';
 }
 
 function platformColor(platform) {
-    return ({ twitter: '#242424', x: '#242424', facebook: '#4267b2', reddit: '#d95d36', instagram: '#a93f77', mastodon: '#6254c7', livejournal: '#4f8063', bluesky: '#287fd1' })[platform] || '#375d4a';
+    return ({ twitter: '#242424', x: '#242424', facebook: '#4267b2', reddit: '#d95d36', instagram: '#a93f77', mastodon: '#6254c7', livejournal: '#4f8063', bluesky: '#287fd1', google_plus: '#b5483b' })[platform] || '#375d4a';
 }
 
 function roundRect(context, x, y, width, height, radius) {

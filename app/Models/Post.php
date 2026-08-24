@@ -86,6 +86,7 @@ class Post extends Model
     {
         $url = match ($this->socialAccount?->platform) {
             'facebook' => $this->url ?: data_get($this->metadata, 'external_url'),
+            'google_plus' => data_get($this->metadata, 'external_url'),
             'reddit' => data_get($this->metadata, 'external_url'),
             'mastodon' => $this->type === 'boost' ? $this->url : null,
             default => null,
