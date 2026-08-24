@@ -41,7 +41,8 @@ class RedditArchiveImporter
 
     private function persist(ZipArchive $zip, string $path): array
     {
-        $username = $this->username($path);
+        $statistics = $this->statistics($zip);
+        $username = trim($statistics['account name'] ?? '') ?: $this->username($path);
         $legacyId = pathinfo($path, PATHINFO_FILENAME);
         $account = SocialAccount::where('platform', 'reddit')->where('external_id', $username)->first();
         if (! $account && $legacyId !== $username) {
@@ -53,7 +54,9 @@ class RedditArchiveImporter
             $account = SocialAccount::create(['platform' => 'reddit', 'external_id' => $username, 'handle' => 'u/'.$username, 'display_name' => $username]);
         }
         $archive = Archive::firstOrCreate(['fingerprint' => hash_file('sha256', $path)], [
-            'social_account_id' => $account->id, 'label' => basename($path), 'exported_at' => $this->exportDate($path), 'imported_at' => now(), 'status' => 'ready', 'metadata' => ['source_path' => realpath($path), 'format' => 'reddit-csv'],
+            'social_account_id' => $account->id, 'label' => basename($path),
+            'exported_at' => $this->date($statistics['export time'] ?? null) ?: $this->exportDate($path),
+            'imported_at' => now(), 'status' => 'ready', 'metadata' => ['source_path' => realpath($path), 'format' => 'reddit-csv'],
         ]);
         $created = $archive->wasRecentlyCreated;
         ProfileSnapshot::updateOrCreate(['archive_id' => $archive->id], ['metadata' => ['username' => $username]]);
@@ -148,6 +151,19 @@ class RedditArchiveImporter
         return preg_match('/[-_](\d{8})(?:-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?\.zip$/i', basename($path), $m)
             ? CarbonImmutable::createFromFormat('Ymd', $m[1], 'UTC')
             : null;
+    }
+
+    private function statistics(ZipArchive $zip): array
+    {
+        $statistics = [];
+        foreach ($this->csv($zip, 'statistics.csv') as $row) {
+            $key = trim(mb_strtolower($row['statistic'] ?? ''));
+            if ($key !== '') {
+                $statistics[$key] = trim($row['value'] ?? '');
+            }
+        }
+
+        return $statistics;
     }
 
     private function username(string $path): string

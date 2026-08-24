@@ -347,15 +347,16 @@ class ExampleTest extends TestCase
         }
     }
 
-    public function test_reddit_import_recovers_the_username_from_a_slugged_upload_filename(): void
+    public function test_reddit_import_uses_archive_statistics_instead_of_the_upload_filename(): void
     {
-        $filename = 'export-kiranlightpaw-20250109-b4ca040c-18f9-49a3-8ec3-5fc9a5b336ab';
+        $filename = 'unrelated-upload-name-b4ca040c-18f9-49a3-8ec3-5fc9a5b336ab';
         $source = sys_get_temp_dir().'/'.$filename.'.zip';
         $legacy = SocialAccount::create([
             'platform' => 'reddit', 'external_id' => $filename, 'handle' => 'u/'.$filename, 'display_name' => $filename,
         ]);
         $zip = new ZipArchive;
         $zip->open($source, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        $zip->addFromString('statistics.csv', "statistic,value\naccount name,kiranlightpaw\nexport time,2025-01-09 02:11:05 UTC\n");
         $zip->addFromString('posts.csv', "id,permalink,date,title,body,subreddit,gildings,link,media,url\nreddit-post,/r/archives/comments/reddit-post,2025-01-01T12:00:00Z,A memory,,archives,0,,,https://example.com\n");
         $zip->addFromString('comments.csv', "id,permalink,date,body,parent,subreddit,gildings\n");
         $zip->close();
