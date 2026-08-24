@@ -43,8 +43,14 @@ class RedditArchiveImporter
     {
         $statistics = $this->statistics($zip);
         $username = trim($statistics['account name'] ?? '') ?: $this->username($path);
+        $fingerprint = hash_file('sha256', $path);
+        $existingArchive = Archive::with('socialAccount')->where('fingerprint', $fingerprint)->first();
+        $archiveAccount = $existingArchive?->socialAccount?->platform === 'reddit' ? $existingArchive->socialAccount : null;
         $legacyId = pathinfo($path, PATHINFO_FILENAME);
         $account = SocialAccount::where('platform', 'reddit')->where('external_id', $username)->first();
+        if (! $account && $archiveAccount) {
+            $account = $archiveAccount;
+        }
         if (! $account && $legacyId !== $username) {
             $account = SocialAccount::where('platform', 'reddit')->where('external_id', $legacyId)->first();
         }
@@ -53,12 +59,17 @@ class RedditArchiveImporter
         } else {
             $account = SocialAccount::create(['platform' => 'reddit', 'external_id' => $username, 'handle' => 'u/'.$username, 'display_name' => $username]);
         }
-        $archive = Archive::firstOrCreate(['fingerprint' => hash_file('sha256', $path)], [
+        $archive = Archive::firstOrCreate(['fingerprint' => $fingerprint], [
             'social_account_id' => $account->id, 'label' => basename($path),
             'exported_at' => $this->date($statistics['export time'] ?? null) ?: $this->exportDate($path),
             'imported_at' => now(), 'status' => 'ready', 'metadata' => ['source_path' => realpath($path), 'format' => 'reddit-csv'],
         ]);
         $created = $archive->wasRecentlyCreated;
+        $archive->update([
+            'social_account_id' => $account->id, 'label' => basename($path),
+            'exported_at' => $this->date($statistics['export time'] ?? null) ?: $this->exportDate($path),
+            'imported_at' => now(), 'status' => 'ready', 'metadata' => ['source_path' => realpath($path), 'format' => 'reddit-csv'],
+        ]);
         ProfileSnapshot::updateOrCreate(['archive_id' => $archive->id], ['metadata' => ['username' => $username]]);
         $count = $this->posts($zip, $account, $archive, 'posts.csv', 'post') + $this->posts($zip, $account, $archive, 'comments.csv', 'comment');
         $this->votes($zip, $account, 'post_votes.csv', 'post');

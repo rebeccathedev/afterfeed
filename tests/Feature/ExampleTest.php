@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AppSetting;
+use App\Models\Archive;
 use App\Models\Attachment;
 use App\Models\DirectMessage;
 use App\Models\Person;
@@ -352,7 +353,7 @@ class ExampleTest extends TestCase
         $filename = 'unrelated-upload-name-b4ca040c-18f9-49a3-8ec3-5fc9a5b336ab';
         $source = sys_get_temp_dir().'/'.$filename.'.zip';
         $legacy = SocialAccount::create([
-            'platform' => 'reddit', 'external_id' => $filename, 'handle' => 'u/'.$filename, 'display_name' => $filename,
+            'platform' => 'reddit', 'external_id' => 'previous-upload-name-and-uuid', 'handle' => 'u/previous-upload-name-and-uuid', 'display_name' => 'previous-upload-name-and-uuid',
         ]);
         $zip = new ZipArchive;
         $zip->open($source, ZipArchive::CREATE | ZipArchive::OVERWRITE);
@@ -360,6 +361,9 @@ class ExampleTest extends TestCase
         $zip->addFromString('posts.csv', "id,permalink,date,title,body,subreddit,gildings,link,media,url\nreddit-post,/r/archives/comments/reddit-post,2025-01-01T12:00:00Z,A memory,,archives,0,,,https://example.com\n");
         $zip->addFromString('comments.csv', "id,permalink,date,body,parent,subreddit,gildings\n");
         $zip->close();
+        Archive::create([
+            'social_account_id' => $legacy->id, 'label' => 'previous upload', 'fingerprint' => hash_file('sha256', $source),
+        ]);
 
         try {
             $result = app(RedditArchiveImporter::class)->import($source);
