@@ -134,6 +134,8 @@ docker compose --env-file .env.container -f compose.production.yml exec afterfee
 
 Browser uploads are generally easier because uploaded archives are automatically owned by the signed-in user.
 
+Afterfeed recognizes Twitter/X, Mastodon, Facebook, Reddit, Instagram, Google+, and LiveJournal exports by their contents. Google Takeout ZIPs can be uploaded or imported without renaming or extracting them. See [importing social archives](importing.md) for preserved fields, retry behavior, and Google+ format details.
+
 ## Published images
 
 The GitHub Actions workflow publishes:

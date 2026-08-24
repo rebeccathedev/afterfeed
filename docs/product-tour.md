@@ -6,6 +6,8 @@ Afterfeed brings personal social exports into one quiet, private interface. Sign
 
 The home screen keeps imported identities visible without forcing every service into a separate silo. Search, account filters, dates, post types, and media filters narrow the unified timeline.
 
+Afterfeed currently recognizes Twitter/X, Mastodon, Facebook, Reddit, Instagram, Google+, and LiveJournal archives. Google+ Takeout support brings posts, authored and embedded comments, +1s, shared links, check-ins, and post media into the same timeline; see the [import guide](importing.md) for format details.
+
 ![Afterfeed home screen with four fictional connected archives](images/afterfeed-timeline.jpg)
 
 ## Rediscover a date across services
@@ -22,4 +24,4 @@ Any post can become a square, portrait, or landscape PNG. The card is rendered l
 
 ## Explore further
 
-Afterfeed also includes reconstructed conversations, a media gallery, yearly activity calendars, statistics, people and relationship views, collections, privacy-aware exports, a read-only API, and local or authenticated remote MCP access.
+Afterfeed also includes reconstructed conversations, a media gallery, yearly activity calendars, statistics, people and relationship views, collections, privacy-aware exports, a read-only API, and local or authenticated remote MCP access. Archive-specific preservation details live in the [import guide](importing.md).

@@ -14,7 +14,7 @@ your personal social media archives—without depending on the platforms that cr
 ![SQLite](https://img.shields.io/badge/SQLite-local--first-003B57?style=flat-square&logo=sqlite&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/license-MIT-2f855a?style=flat-square)
 
-[Features](#what-you-can-do) · [Platforms](#supported-archives) · [Quick start](#quick-start) · [Product tour](docs/product-tour.md) · [API & MCP](#api--mcp)
+[Features](#what-you-can-do) · [Platforms](#supported-archives) · [Quick start](#quick-start) · [Import guide](docs/importing.md) · [Product tour](docs/product-tour.md) · [API & MCP](#api--mcp)
 
 </div>
 
@@ -119,6 +119,8 @@ php artisan archive:import /path/to/twitter-export.zip me@rebeccapeck.org
 ```
 
 Imports are safe to repeat. A content fingerprint prevents accidental duplicate imports, while re-importing an existing archive refreshes its normalized records through the latest importer so newly supported metadata can be backfilled.
+
+The [import guide](docs/importing.md) documents format recognition, ownership, privacy, and the Google+ Takeout layout and coverage in detail.
 
 ## 🧭 Explore and curate
 
