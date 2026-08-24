@@ -55,7 +55,7 @@ return new class extends Migration
             $table->string('external_account_id');
             $table->text('url')->nullable();
             $table->timestamps();
-            $table->unique(['archive_id', 'direction', 'external_account_id']);
+            $table->unique(['archive_id', 'direction', 'external_account_id'], 'social_connections_archive_direction_unique');
         });
         Schema::create('social_lists', function (Blueprint $table) {
             $table->id();
