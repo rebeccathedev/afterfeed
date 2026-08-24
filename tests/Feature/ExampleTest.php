@@ -12,6 +12,7 @@ use App\Models\PostCollection;
 use App\Models\SocialAccount;
 use App\Services\DatabaseDialect;
 use App\Services\Import\FacebookArchiveImporter;
+use App\Services\Import\RedditArchiveImporter;
 use App\Services\Import\TwitterArchiveImporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
@@ -341,6 +342,33 @@ class ExampleTest extends TestCase
             Storage::disk('public')->assertExists($attachment->path);
             $this->assertDatabaseHas('posts', ['type' => 'comment', 'body' => 'A comment made elsewhere.', 'posted_at' => '2017-12-15 12:00:00']);
             $this->assertDatabaseHas('liked_posts', ['url' => 'https://plus.google.com/+Friend/posts/liked', 'body' => 'A liked post.']);
+        } finally {
+            File::delete($source);
+        }
+    }
+
+    public function test_reddit_import_recovers_the_username_from_a_slugged_upload_filename(): void
+    {
+        $filename = 'export-kiranlightpaw-20250109-b4ca040c-18f9-49a3-8ec3-5fc9a5b336ab';
+        $source = sys_get_temp_dir().'/'.$filename.'.zip';
+        $legacy = SocialAccount::create([
+            'platform' => 'reddit', 'external_id' => $filename, 'handle' => 'u/'.$filename, 'display_name' => $filename,
+        ]);
+        $zip = new ZipArchive;
+        $zip->open($source, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        $zip->addFromString('posts.csv', "id,permalink,date,title,body,subreddit,gildings,link,media,url\nreddit-post,/r/archives/comments/reddit-post,2025-01-01T12:00:00Z,A memory,,archives,0,,,https://example.com\n");
+        $zip->addFromString('comments.csv', "id,permalink,date,body,parent,subreddit,gildings\n");
+        $zip->close();
+
+        try {
+            $result = app(RedditArchiveImporter::class)->import($source);
+            $legacy->refresh();
+            $this->assertSame('kiranlightpaw', $legacy->external_id);
+            $this->assertSame('u/kiranlightpaw', $legacy->handle);
+            $this->assertSame('kiranlightpaw', $legacy->display_name);
+            $this->assertTrue($result['archive']->exported_at->isSameDay('2025-01-09'));
+            $this->assertSame($legacy->id, $result['archive']->social_account_id);
+            $this->assertDatabaseHas('posts', ['social_account_id' => $legacy->id, 'external_id' => 'reddit-post']);
         } finally {
             File::delete($source);
         }

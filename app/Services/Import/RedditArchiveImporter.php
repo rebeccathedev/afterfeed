@@ -41,8 +41,17 @@ class RedditArchiveImporter
 
     private function persist(ZipArchive $zip, string $path): array
     {
-        $username = preg_match('/^export_(.+?)_\d{8}\.zip$/', basename($path), $m) ? $m[1] : pathinfo($path, PATHINFO_FILENAME);
-        $account = SocialAccount::updateOrCreate(['platform' => 'reddit', 'external_id' => $username], ['handle' => 'u/'.$username, 'display_name' => $username]);
+        $username = $this->username($path);
+        $legacyId = pathinfo($path, PATHINFO_FILENAME);
+        $account = SocialAccount::where('platform', 'reddit')->where('external_id', $username)->first();
+        if (! $account && $legacyId !== $username) {
+            $account = SocialAccount::where('platform', 'reddit')->where('external_id', $legacyId)->first();
+        }
+        if ($account) {
+            $account->update(['external_id' => $username, 'handle' => 'u/'.$username, 'display_name' => $username]);
+        } else {
+            $account = SocialAccount::create(['platform' => 'reddit', 'external_id' => $username, 'handle' => 'u/'.$username, 'display_name' => $username]);
+        }
         $archive = Archive::firstOrCreate(['fingerprint' => hash_file('sha256', $path)], [
             'social_account_id' => $account->id, 'label' => basename($path), 'exported_at' => $this->exportDate($path), 'imported_at' => now(), 'status' => 'ready', 'metadata' => ['source_path' => realpath($path), 'format' => 'reddit-csv'],
         ]);
@@ -136,6 +145,18 @@ class RedditArchiveImporter
 
     private function exportDate(string $path): ?string
     {
-        return preg_match('/_(\d{8})\.zip$/',basename($path),$m) ? CarbonImmutable::createFromFormat('Ymd',$m[1],'UTC') : null;
+        return preg_match('/[-_](\d{8})(?:-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?\.zip$/i', basename($path), $m)
+            ? CarbonImmutable::createFromFormat('Ymd', $m[1], 'UTC')
+            : null;
+    }
+
+    private function username(string $path): string
+    {
+        $filename = basename($path);
+        if (preg_match('/^export[-_](.+)[-_]\d{8}(?:-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?\.zip$/i', $filename, $matches)) {
+            return $matches[1];
+        }
+
+        return pathinfo($path, PATHINFO_FILENAME);
     }
 }
