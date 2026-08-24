@@ -73,7 +73,7 @@ VOLUME ["/var/www/html/database", "/var/www/html/storage/app", "/var/www/html/pu
 EXPOSE 9000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD SCRIPT_FILENAME=/var/www/html/public/index.php SCRIPT_NAME=/up REQUEST_URI=/up REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 2>/dev/null | grep -q "Status: 200"
+    CMD SCRIPT_FILENAME=/fpm-ping SCRIPT_NAME=/fpm-ping REQUEST_URI=/fpm-ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 2>/dev/null | grep -q "pong"
 
 ENTRYPOINT ["afterfeed-entrypoint"]
 CMD ["php-fpm", "-F"]
