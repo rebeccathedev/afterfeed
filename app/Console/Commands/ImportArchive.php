@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\Import\FacebookArchiveImporter;
 use App\Services\Import\GooglePlusArchiveImporter;
 use App\Services\Import\InstagramArchiveImporter;
+use App\Services\Import\JekyllArchiveImporter;
 use App\Services\Import\LiveJournalArchiveImporter;
 use App\Services\Import\MastodonArchiveImporter;
 use App\Services\Import\NextdoorArchiveImporter;
@@ -22,7 +23,7 @@ class ImportArchive extends Command
 
     protected $description = 'Import a social media archive';
 
-    public function handle(TwitterArchiveImporter $twitter, MastodonArchiveImporter $mastodon, FacebookArchiveImporter $facebook, GooglePlusArchiveImporter $googlePlus, NextdoorArchiveImporter $nextdoor, RedditArchiveImporter $reddit, InstagramArchiveImporter $instagram, LiveJournalArchiveImporter $liveJournal, PeopleIndexer $people): int
+    public function handle(TwitterArchiveImporter $twitter, MastodonArchiveImporter $mastodon, FacebookArchiveImporter $facebook, GooglePlusArchiveImporter $googlePlus, NextdoorArchiveImporter $nextdoor, RedditArchiveImporter $reddit, InstagramArchiveImporter $instagram, LiveJournalArchiveImporter $liveJournal, JekyllArchiveImporter $jekyll, PeopleIndexer $people): int
     {
         try {
             $owner = $this->option('user');
@@ -42,6 +43,7 @@ class ImportArchive extends Command
             $isInstagram = $zip->locateName('personal_information/personal_information/personal_information.json') !== false && $zip->locateName('your_instagram_activity/content/posts_1.json') !== false;
             $isGooglePlus = false;
             $isLiveJournal = false;
+            $isJekyll = false;
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $name = $zip->getNameIndex($i);
                 if (preg_match('#^Takeout/Google\+ Stream/Posts/.+\.html$#', $name)) {
@@ -50,9 +52,12 @@ class ImportArchive extends Command
                 if ($i < 100 && preg_match('#^[^/]+/\d{8}_\d{4}$#', $name)) {
                     $isLiveJournal = true;
                 }
+                if (preg_match('#(?:^|/)_posts/\d{4}-\d{2}-\d{2}-.+\.(?:md|markdown|mkd|mdown)$#i', $name)) {
+                    $isJekyll = true;
+                }
             }
             $zip->close();
-            $importer = $isNextdoor ? $nextdoor : ($isGooglePlus ? $googlePlus : ($isLiveJournal ? $liveJournal : ($isInstagram ? $instagram : ($isFacebook ? $facebook : ($isMastodon ? $mastodon : ($isReddit ? $reddit : $twitter))))));
+            $importer = $isNextdoor ? $nextdoor : ($isGooglePlus ? $googlePlus : ($isLiveJournal ? $liveJournal : ($isJekyll ? $jekyll : ($isInstagram ? $instagram : ($isFacebook ? $facebook : ($isMastodon ? $mastodon : ($isReddit ? $reddit : $twitter)))))));
             $result = $importer->import($this->argument('path'));
         } catch (Throwable $exception) {
             $this->error($exception->getMessage());

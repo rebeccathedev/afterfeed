@@ -11,7 +11,7 @@
 @if(!request()->filled('account'))<section><div class="heading"><div><p class="eyebrow">SOURCES</p><h2>Your archives</h2></div><span>{{ $archives->count() }} connected</span></div>
 <div class="source-grid">@forelse($archives as $archive)
 <a class="source" href="{{ route('archives.index',['account'=>$archive->social_account_id]) }}" data-platform="{{ $archive->socialAccount->platform }}"><x-service-icon :platform="$archive->socialAccount->platform" class="icon"/><div class="source-copy"><h3>{{ $archive->socialAccount->display_name ?: ucfirst($archive->socialAccount->platform) }}</h3><p>{{ $archive->socialAccount->handle ?: $archive->label }}</p></div><div class="count"><strong>{{ number_format($archive->posts_count) }}</strong><small>items</small></div></a>
-@empty @foreach(['facebook','x','reddit','bluesky','mastodon','instagram','google_plus','nextdoor','livejournal'] as $platform)
+@empty @foreach(['facebook','x','reddit','bluesky','mastodon','instagram','google_plus','nextdoor','livejournal','jekyll'] as $platform)
 <article class="source muted" data-platform="{{ $platform }}"><x-service-icon :platform="$platform" class="icon"/><div class="source-copy"><h3>{{ $platform==='x'?'Twitter / X':($platform==='google_plus'?'Google+':ucfirst($platform)) }}</h3><p>Ready to import</p></div><b class="add">＋</b></article>
 @endforeach @endforelse</div></section>@endif
 <section id="timeline" class="timeline"><div class="heading"><div><p class="eyebrow">MEMORY LANE</p><h2>Your timeline</h2></div><span>{{ number_format($timelinePosts->total()) }} moments</span></div>

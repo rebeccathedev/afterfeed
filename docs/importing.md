@@ -6,7 +6,15 @@ Afterfeed recognizes supported export formats from their contents, so uploaded f
 php artisan archive:import /path/to/archive.zip me@rebeccapeck.org
 ```
 
-Supported imports include Twitter/X, Mastodon, Facebook, Reddit, Instagram, Google+, Nextdoor, and LiveJournal. ZIP files can be uploaded directly; LiveJournal `.tar.gz` and `.tgz` archives are normalized to ZIP during browser upload.
+Supported imports include Twitter/X, Mastodon, Facebook, Reddit, Instagram, Google+, Nextdoor, LiveJournal, and Jekyll. ZIP files can be uploaded directly; LiveJournal `.tar.gz` and `.tgz` archives are normalized to ZIP during browser upload.
+
+## Jekyll sites
+
+Upload a ZIP of a Jekyll source repository, including archives downloaded from GitHub. Afterfeed detects dated Markdown files under any `_posts` directory, so repositories with a generated top-level folder or a nested source directory are supported. Site identity and original links come from `_config.yml`; `_data/author.yml` or `_data/author.yaml` can provide the author name, location, email, and local avatar.
+
+Published posts become timeline articles. Afterfeed preserves their title, subtitle, author, slug, tags, categories, complete front matter, and original Markdown as metadata. It also creates readable timeline text, retains HTTP links, reconstructs common Jekyll permalink patterns, copies referenced local images/audio/video into archive storage, and imports a bundled author avatar when present. Files under `_drafts` are deliberately excluded because they were not published.
+
+The import is content-detected and repeatable: neither the repository name nor the uploaded ZIP filename is used as account identity, and importing the same archive again does not duplicate posts or attachments. Jekyll supports extensive plugin-defined Liquid tags; unknown tags are removed from readable timeline text while the unchanged source Markdown remains available in metadata.
 
 Imports are transactional and safe to retry. Afterfeed fingerprints each source archive, refreshes normalized records when the same archive is imported again, and rebuilds the importing user's People index after a successful import.
 

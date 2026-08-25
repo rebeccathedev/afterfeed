@@ -6,7 +6,7 @@ Afterfeed brings personal social exports into one quiet, private interface. Sign
 
 The home screen keeps imported identities visible without forcing every service into a separate silo. Search, account filters, dates, post types, and media filters narrow the unified timeline.
 
-Afterfeed currently recognizes Twitter/X, Mastodon, Facebook, Reddit, Instagram, Google+, Nextdoor, and LiveJournal archives. Google+ Takeout support brings posts, authored and embedded comments, +1s, shared links, check-ins, and post media into the same timeline. Nextdoor content reports add neighborhood posts, comments, reactions, messages, and listings while filtering sensitive account fields; see the [import guide](importing.md) for format details.
+Afterfeed currently recognizes Twitter/X, Mastodon, Facebook, Reddit, Instagram, Google+, Nextdoor, LiveJournal, and Jekyll archives. Google+ Takeout support brings posts, authored and embedded comments, +1s, shared links, check-ins, and post media into the same timeline. Nextdoor content reports add neighborhood posts, comments, reactions, messages, and listings while filtering sensitive account fields. Jekyll source archives add published articles, front matter, tags, permalinks, and referenced local media; see the [import guide](importing.md) for format details.
 
 ![Afterfeed home screen with four fictional connected archives](images/afterfeed-timeline.jpg)
 

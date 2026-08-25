@@ -416,6 +416,67 @@ class ExampleTest extends TestCase
         }
     }
 
+    public function test_jekyll_imports_published_posts_front_matter_links_identity_and_media(): void
+    {
+        Storage::fake('public');
+        $source = tempnam(sys_get_temp_dir(), 'afterfeed-jekyll-');
+        $zip = new ZipArchive;
+        $zip->open($source, ZipArchive::OVERWRITE);
+        $zip->addFromString('sample-site/src/_config.yml', "name: Archive Garden\ndescription: Stories worth keeping.\nurl: https://archive.example.test\npermalink: /:year/:month/:title/\n");
+        $zip->addFromString('sample-site/src/_data/author.yaml', "name: Archive Gardener\nlocation: Example City\navatar: /assets/avatar.jpg\n");
+        $zip->addFromString('sample-site/src/assets/avatar.jpg', 'avatar-image');
+        $zip->addFromString('sample-site/src/assets/posts/seedlings.jpg', 'post-image');
+        $zip->addFromString('sample-site/src/_posts/2024-04-15-spring-seedlings.markdown', <<<'MARKDOWN'
+            ---
+            tags: [Superseded]
+            author: Archive Gardener
+            layout: post
+            title: Spring Seedlings
+            subtitle: Notes from the archive garden.
+            date: 2024-04-15 09:30:00-0600
+            tags:
+            - Gardening
+            - Memories
+            categories: [Projects]
+            ---
+            The [planting guide](https://example.test/guide) helped enormously.
+
+            ![A tray of seedlings](/assets/posts/seedlings.jpg)
+
+            <!-- more -->
+
+            {% highlight php %}
+            echo "growing";
+            {% endhighlight %}
+            MARKDOWN);
+        $zip->addFromString('sample-site/src/_drafts/2024-04-16-private-draft.md', "---\ntitle: Private Draft\n---\nNot published.");
+        $zip->close();
+
+        try {
+            $this->artisan('archive:import', ['path' => $source, '--user' => $this->user->id])->assertSuccessful();
+            $this->artisan('archive:import', ['path' => $source, '--user' => $this->user->id])->assertSuccessful();
+            $account = SocialAccount::where('platform', 'jekyll')->firstOrFail();
+            $this->assertSame('archive.example.test', $account->external_id);
+            $this->assertSame('Archive Gardener', $account->display_name);
+            $this->assertSame('Example City', $account->location);
+            Storage::disk('public')->assertExists($account->avatar_path);
+            $post = Post::where('social_account_id', $account->id)->firstOrFail();
+            $this->assertSame('article', $post->type);
+            $this->assertSame('2024-04-15 15:30:00', $post->posted_at->format('Y-m-d H:i:s'));
+            $this->assertSame('https://archive.example.test/2024/04/spring-seedlings/', $post->url);
+            $this->assertStringContainsString('Spring Seedlings', $post->body);
+            $this->assertStringContainsString('https://example.test/guide', $post->body);
+            $this->assertSame(['Gardening', 'Memories'], data_get($post->metadata, 'tags'));
+            $this->assertStringContainsString('{% highlight php %}', data_get($post->metadata, 'source_markdown'));
+            $this->assertCount(1, $post->attachments);
+            Storage::disk('public')->assertExists($post->attachments->first()->path);
+            $this->assertSame(1, Post::where('social_account_id', $account->id)->count());
+            $this->assertDatabaseMissing('posts', ['body' => 'Private Draft']);
+        } finally {
+            File::delete($source);
+        }
+    }
+
     public function test_the_media_gallery_shows_and_filters_archived_media(): void
     {
         $first = SocialAccount::create(['platform' => 'instagram', 'external_id' => 'media-one', 'handle' => '@media-one']);
