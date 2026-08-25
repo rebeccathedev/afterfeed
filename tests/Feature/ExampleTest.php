@@ -379,6 +379,43 @@ class ExampleTest extends TestCase
         }
     }
 
+    public function test_nextdoor_imports_content_activity_and_safe_profile_fields(): void
+    {
+        $source = tempnam(sys_get_temp_dir(), 'afterfeed-nextdoor-');
+        $zip = new ZipArchive;
+        $zip->open($source, ZipArchive::OVERWRITE);
+        $zip->addFromString('Profile Information.csv', "First name,Last name,Bio,Email,Date of Birth,Gender,Pronouns,Address,Date joined,Date verified,Verification status,Lead status,Founding status,Profile photo,Home town,Children,Spouse,Occupation,Interests,Skills,What I love about my neighborhood,Pets\nArchive,Neighbor,A short bio,me@rebeccapeck.org,1980-01-01,,they/them,100 Private Street,2020-01-01,,Verified,No,No,https://example.test/avatar.jpg,Example City,,,,Gardening,Repairs,Kind neighbors,Dog\n");
+        $zip->addFromString('Posts.csv', "Message type,Creation date,Body,Subject,Scope,Currently visible on Nextdoor,Media urls\nUSER,2025-01-02 12:00:00+00:00,Post body,Post subject,NEIGHBORHOOD ONLY,Yes,\"['https://example.test/photo.jpg']\"\n");
+        $zip->addFromString('Comments.csv', "Post subject,Body,Creation date,Currently visible on Nextdoor,Media urls\nAnother post,A comment,2025-01-03 12:00:00+00:00,Yes,\n");
+        $zip->addFromString('Reactions.csv', "Type,Post subject,Reaction type,Creation date,Currently visible on Nextdoor\nPost,A useful post,thank,2025-01-04 12:00:00+00:00,Yes\n");
+        $zip->addFromString('Private Messages.csv', "Status,Subject,Message,Sender,Creation date\nInbox,Hello,A private message,Archive Neighbor,\"Jan 05, 2025 - 12:00:00 PM\"\n");
+        $zip->addFromString('FS&F Listings.csv', "Subject,Body,Status,Creation date\nGarden tools,Free to a neighbor,Active,2025-01-06 12:00:00 PM\n");
+        $zip->addFromString('Seasonal Activities.csv', "Map activity,Response text,Creation date\nHoliday map,Lights are on,\"Jan 07, 2025 - 12:00:00 PM\"\n");
+        $zip->close();
+
+        try {
+            $this->artisan('archive:import', ['path' => $source, '--user' => $this->user->id])->assertSuccessful();
+            $account = SocialAccount::where('platform', 'nextdoor')->firstOrFail();
+            $this->assertSame('Archive Neighbor', $account->display_name);
+            $this->assertSame('Nextdoor', $account->handle);
+            $this->assertSame('Example City', $account->location);
+            $this->assertSame('they/them', data_get($account->metadata, 'pronouns'));
+            $this->assertArrayNotHasKey('email', $account->metadata);
+            $this->assertArrayNotHasKey('address', $account->metadata);
+            $this->assertArrayNotHasKey('date_of_birth', $account->metadata);
+            $this->assertDatabaseHas('posts', ['social_account_id' => $account->id, 'type' => 'post', 'body' => "Post subject\n\nPost body"]);
+            $this->assertDatabaseHas('posts', ['social_account_id' => $account->id, 'type' => 'comment', 'body' => "Another post\n\nA comment"]);
+            $this->assertDatabaseHas('posts', ['social_account_id' => $account->id, 'type' => 'listing', 'body' => "Garden tools\n\nFree to a neighbor"]);
+            $this->assertDatabaseHas('posts', ['social_account_id' => $account->id, 'type' => 'activity', 'body' => "Holiday map\n\nLights are on"]);
+            $post = Post::where('social_account_id', $account->id)->where('type', 'post')->firstOrFail();
+            $this->assertSame(['https://example.test/photo.jpg'], data_get($post->metadata, 'media_urls'));
+            $this->assertDatabaseHas('liked_posts', ['social_account_id' => $account->id, 'body' => 'A useful post']);
+            $this->assertDatabaseHas('direct_messages', ['social_account_id' => $account->id, 'direction' => 'sent', 'body' => 'A private message']);
+        } finally {
+            File::delete($source);
+        }
+    }
+
     public function test_the_media_gallery_shows_and_filters_archived_media(): void
     {
         $first = SocialAccount::create(['platform' => 'instagram', 'external_id' => 'media-one', 'handle' => '@media-one']);

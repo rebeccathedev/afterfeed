@@ -45,6 +45,7 @@ Afterfeed turns disconnected export files into one calm, searchable timeline. Yo
 | **Reddit** | Submissions, comments and reply relationships, votes, saved and hidden items, communities, moderation, multireddits, and messages |
 | **Instagram** | Posts, videos, comments, media, profile details, likes, saved posts, follows, and direct messages |
 | **Google+** | Posts, reshares, authored and embedded comments, +1s, external link previews, visibility, check-in locations, profile identity, and post media from Google Takeout |
+| **Nextdoor** | Posts, comments, reactions, private messages, For Sale & Free listings, seasonal activity, and privacy-filtered profile details |
 | **LiveJournal** | Journal subjects, HTML and readable text, tags, userpics, item IDs, dates, and original entry links |
 
 Sensitive security and account data—such as IP history, device tokens, phone numbers, cryptographic keys, payment records, birth dates, and advertising preferences—is intentionally excluded where present.
@@ -112,7 +113,7 @@ For HTTPS, external databases, backups, a custom FastCGI proxy, and troubleshoot
 
 ### Import an archive
 
-Afterfeed automatically recognizes supported Twitter/X, Mastodon, Facebook, Reddit, Instagram, Google+, and LiveJournal export formats. Browser uploads are attached to the signed-in user. For a command-line import:
+Afterfeed automatically recognizes supported Twitter/X, Mastodon, Facebook, Reddit, Instagram, Google+, Nextdoor, and LiveJournal export formats. Browser uploads are attached to the signed-in user. For a command-line import:
 
 ```bash
 php artisan archive:import /path/to/twitter-export.zip me@rebeccapeck.org

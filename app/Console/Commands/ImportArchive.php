@@ -8,6 +8,7 @@ use App\Services\Import\GooglePlusArchiveImporter;
 use App\Services\Import\InstagramArchiveImporter;
 use App\Services\Import\LiveJournalArchiveImporter;
 use App\Services\Import\MastodonArchiveImporter;
+use App\Services\Import\NextdoorArchiveImporter;
 use App\Services\Import\RedditArchiveImporter;
 use App\Services\Import\TwitterArchiveImporter;
 use App\Services\PeopleIndexer;
@@ -21,7 +22,7 @@ class ImportArchive extends Command
 
     protected $description = 'Import a social media archive';
 
-    public function handle(TwitterArchiveImporter $twitter, MastodonArchiveImporter $mastodon, FacebookArchiveImporter $facebook, GooglePlusArchiveImporter $googlePlus, RedditArchiveImporter $reddit, InstagramArchiveImporter $instagram, LiveJournalArchiveImporter $liveJournal, PeopleIndexer $people): int
+    public function handle(TwitterArchiveImporter $twitter, MastodonArchiveImporter $mastodon, FacebookArchiveImporter $facebook, GooglePlusArchiveImporter $googlePlus, NextdoorArchiveImporter $nextdoor, RedditArchiveImporter $reddit, InstagramArchiveImporter $instagram, LiveJournalArchiveImporter $liveJournal, PeopleIndexer $people): int
     {
         try {
             $owner = $this->option('user');
@@ -37,6 +38,7 @@ class ImportArchive extends Command
             $isMastodon = $zip->locateName('actor.json') !== false && $zip->locateName('outbox.json') !== false;
             $isFacebook = $zip->locateName('personal_information/profile_information/profile_information.json') !== false;
             $isReddit = $zip->locateName('posts.csv') !== false && $zip->locateName('comments.csv') !== false;
+            $isNextdoor = $zip->locateName('Profile Information.csv') !== false && $zip->locateName('Posts.csv') !== false && $zip->locateName('Comments.csv') !== false;
             $isInstagram = $zip->locateName('personal_information/personal_information/personal_information.json') !== false && $zip->locateName('your_instagram_activity/content/posts_1.json') !== false;
             $isGooglePlus = false;
             $isLiveJournal = false;
@@ -50,7 +52,7 @@ class ImportArchive extends Command
                 }
             }
             $zip->close();
-            $importer = $isGooglePlus ? $googlePlus : ($isLiveJournal ? $liveJournal : ($isInstagram ? $instagram : ($isFacebook ? $facebook : ($isMastodon ? $mastodon : ($isReddit ? $reddit : $twitter)))));
+            $importer = $isNextdoor ? $nextdoor : ($isGooglePlus ? $googlePlus : ($isLiveJournal ? $liveJournal : ($isInstagram ? $instagram : ($isFacebook ? $facebook : ($isMastodon ? $mastodon : ($isReddit ? $reddit : $twitter))))));
             $result = $importer->import($this->argument('path'));
         } catch (Throwable $exception) {
             $this->error($exception->getMessage());

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Afterfeed is a private, local-first home for your social media archives.">
+  <meta name="theme-color" content="#355b49"><title>Afterfeed — Your social history, back in your hands</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <header class="nav wrap"><a class="brand" href="./"><img src="assets/afterfeed-mark.svg" alt=""><span>Afterfeed</span></a><nav><a href="#features">Features</a><a href="#install">Install</a><a class="nav-cta" href="https://github.com/rebeccathedev/afterfeed">GitHub ↗</a></nav></header>
+  <main>
+    <section class="hero wrap"><div class="hero-copy"><p class="eyebrow">YOUR PERSONAL INTERNET ARCHIVE</p><h1>Your social history,<br><em>back in your hands.</em></h1><p class="lede">Afterfeed turns years of disconnected social exports into one calm, searchable timeline—private, local-first, and entirely under your control.</p><div class="actions"><a class="button primary" href="#install">Install Afterfeed</a><a class="button secondary" href="https://github.com/rebeccathedev/afterfeed">View source</a></div><p class="fine">Free and open source · Self-hosted · Multi-user ready</p></div><figure class="hero-shot"><img src="assets/afterfeed-timeline.jpg" alt="Afterfeed timeline with several fictional social archives"><figcaption>One private timeline for every archive.</figcaption></figure></section>
+    <section class="platforms"><div class="wrap platform-row"><span>Twitter / X</span><span>Mastodon</span><span>Facebook</span><span>Reddit</span><span>Instagram</span><span>Google+</span><span>Nextdoor</span><span>LiveJournal</span></div></section>
+    <section class="section wrap" id="features"><div class="section-heading"><p class="eyebrow">A QUIETER WAY TO LOOK BACK</p><h2>Not another feed.<br>A place for what remains.</h2></div><div class="feature-grid">
+      <article><i>⌕</i><h3>Find anything</h3><p>Search posts, people, hashtags, dates, platforms, conversations, and archived media.</p></article>
+      <article><i>◷</i><h3>Rediscover moments</h3><p>On This Day, maps, calendars, and statistics make a long archive feel human again.</p></article>
+      <article><i>◇</i><h3>Curate privately</h3><p>Annotate, collect, tag, and hide posts without changing the original archive.</p></article>
+      <article><i>↗</i><h3>Share selectively</h3><p>Create social-ready images or privacy-filtered HTML, PDF, JSON, and media exports.</p></article>
+      <article><i>⌂</i><h3>Keep it local</h3><p>Your database and media stay on the installation you control. No hosted account required.</p></article>
+      <article><i>⚿</i><h3>Connect your tools</h3><p>A user-scoped read-only API and MCP server make your own history useful again.</p></article>
+    </div></section>
+    <section class="showcase"><div class="wrap showcase-grid"><div><p class="eyebrow">MEMORIES ACROSS THE YEARS</p><h2>Travel back without scrolling forever.</h2><p>Choose a date and see the moments you shared across every service, grouped by year. Location-bearing posts can include a focused map without loading tiles until you ask.</p></div><figure><img src="assets/afterfeed-on-this-day.jpg" alt="Afterfeed On This Day screen with fictional archive data"></figure></div></section>
+    <section class="section wrap share-section"><figure><img src="assets/afterfeed-share-card.jpg" alt="Afterfeed share-card creator with fictional archive data"></figure><div><p class="eyebrow">SHARE A MEMORY, NOT YOUR ARCHIVE</p><h2>Old posts, ready for wherever you are now.</h2><p>Turn a memory into a square, portrait, or landscape image. Choose what to include—without sending anyone back to Afterfeed.</p></div></section>
+    <section class="install" id="install"><div class="wrap install-grid"><div><p class="eyebrow">RUN IT YOURSELF</p><h2>Simple to install.<br>Yours to keep.</h2><p>Afterfeed runs on PHP 8.4 and Laravel. SQLite works out of the box; MySQL, MariaDB, and PostgreSQL are supported for larger installations.</p><ul><li>Automatic archive detection</li><li>Authentication and per-user libraries</li><li>PHP-FPM Docker image</li><li>Local and remote MCP access</li></ul></div><div class="terminal"><div class="terminal-top"><span></span><span></span><span></span><b>Local install</b></div><pre><code><span># Clone and set up</span>
+git clone https://github.com/rebeccathedev/afterfeed.git
+cd afterfeed
+composer run setup
+
+<span># Start Afterfeed</span>
+composer run dev</code></pre><div class="docker-note"><strong>Prefer Docker?</strong><p>Use the published PHP-FPM image with the included Nginx Compose setup.</p><a href="https://github.com/rebeccathedev/afterfeed#install-with-docker">Docker instructions ↗</a></div></div></div></section>
+    <section class="closing wrap"><img src="assets/afterfeed-mark.svg" alt=""><h2>The version of your internet history<br>that belongs to you.</h2><div class="actions"><a class="button primary" href="https://github.com/rebeccathedev/afterfeed">Get Afterfeed on GitHub</a><a class="button secondary" href="https://github.com/rebeccathedev/afterfeed/blob/main/docs/importing.md">Import guide</a></div></section>
+  </main>
+  <footer><div class="wrap"><a class="brand" href="./"><img src="assets/afterfeed-mark.svg" alt=""><span>Afterfeed</span></a><p>Private by design. Open source by choice.</p><a href="https://github.com/rebeccathedev/afterfeed">GitHub</a></div></footer>
+</body></html>
