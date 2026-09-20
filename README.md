@@ -207,3 +207,6 @@ npm run build
 🌱 Built for the version of your internet history that belongs to you.
 
 </div>
+
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Q3W726YTHU)
