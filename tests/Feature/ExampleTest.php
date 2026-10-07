@@ -140,7 +140,7 @@ class ExampleTest extends TestCase
 
         $this->get(route('posts.show', $boost))
             ->assertOk()
-            ->assertSee('Boosted @me@rebeccapeck.org')
+            ->assertSee('Boosted @gardener@social.example')
             ->assertSee('BOOSTED POST · SOCIAL.EXAMPLE')
             ->assertSee('View post')
             ->assertDontSee('Original ↗');
