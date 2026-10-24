@@ -20,7 +20,7 @@ RUN composer install \
     --optimize-autoloader \
     --no-scripts
 
-FROM php:8.4-fpm-bookworm AS runtime
+FROM php:8.4.27-fpm-bookworm AS runtime
 
 ARG AFTERFEED_VERSION=dev
 ARG GITHUB_REPOSITORY=rebeccathedev/afterfeed

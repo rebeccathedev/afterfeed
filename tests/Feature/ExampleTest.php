@@ -140,7 +140,7 @@ class ExampleTest extends TestCase
 
         $this->get(route('posts.show', $boost))
             ->assertOk()
-            ->assertSee('Boosted @me@rebeccapeck.org')
+            ->assertSee('Boosted @gardener@social.example')
             ->assertSee('BOOSTED POST · SOCIAL.EXAMPLE')
             ->assertSee('View post')
             ->assertDontSee('Original ↗');
@@ -152,7 +152,7 @@ class ExampleTest extends TestCase
         $this->get('/?q='.urlencode('#GardenLife'))
             ->assertOk()
             ->assertSee('A metadata-tagged memory')
-            ->assertDontSee('Boosted @me@rebeccapeck.org');
+            ->assertDontSee('Boosted @gardener@social.example');
     }
 
     public function test_mastodon_boosts_render_an_imported_source_post_inline(): void
