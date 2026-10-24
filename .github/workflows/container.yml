@@ -33,7 +33,7 @@ jobs:
           cache: npm
 
       - run: composer install --no-interaction --prefer-dist
-      - run: php -r 'exit(version_compare(PHP_VERSION, "8.4.27", ">=") ? 0 : 1);'
+      - run: php -r 'exit(PHP_VERSION_ID < 80427);'
       - run: npm ci
       - run: cp .env.example .env
       - run: php artisan key:generate
